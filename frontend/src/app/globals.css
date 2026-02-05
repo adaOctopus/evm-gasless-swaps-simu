@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0f111a;
+  --card: #1a1d2e;
+  --card-elevated: #252836;
+  --input: #2d2f3d;
+  --border: #3d4152;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --muted: #9ca3af;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --warning-border: #f97316;
+}
+
+body {
+  background-color: var(--background);
+  color: #f9fafb;
+  font-family: var(--font-inter), Inter, system-ui, sans-serif;
+}
