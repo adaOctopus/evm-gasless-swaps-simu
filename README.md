@@ -6,7 +6,6 @@ A one-pager DApp for **gasless token swaps** using **ERC-4337** (Account Abstrac
 
 - **`/frontend`** – Next.js 15 (App Router) + TypeScript, wagmi/viem, Alchemy aa-sdk. Connect modal (MetaMask + social), swap form, Go Premium modal. Inter font, minimal UI (off-white, deep purple, vibrant purple accents).
 - **`/backend`** – Express + TypeScript, MVC. Auth (social login), RPC layer for Alchemy Bundler and Gas Manager, tier-based policies, MongoDB (User, Wallet, Swap).
-- **`/presentation`** – 15-slide PDF deck: application, architecture, why ERC-4337 vs relayers, challenges and mitigations, business/revenue. Build script to generate PDF. **Flow diagrams:** `presentation/diagrams/` (Mermaid sources + HTML viewer); pre-rendered PNGs in `presentation/output/` (01-component-flow.png, 02-app-interaction.png) – Inter font, white background, colored nodes and arrows.
 
 ## Features
 
