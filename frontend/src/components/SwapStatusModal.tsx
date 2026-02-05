@@ -10,6 +10,8 @@ export type SwapModalPhase = 'confirm' | 'processing' | 'complete';
 export interface SwapModalPayload {
   phase?: SwapModalPhase;
   userOpHash?: string;
+  /** EIP-7702: transaction hash when using Type 4 flow */
+  txHash?: string;
   error?: string;
 }
 
@@ -21,6 +23,7 @@ export function SwapStatusModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [phase, setPhase] = useState<SwapModalPhase>('confirm');
   const [userOpHash, setUserOpHash] = useState<string | undefined>();
+  const [txHash, setTxHash] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
@@ -28,6 +31,7 @@ export function SwapStatusModal() {
       const payload = (e as CustomEvent<SwapModalPayload>).detail ?? {};
       setPhase(payload.phase ?? 'confirm');
       setUserOpHash(payload.userOpHash);
+      setTxHash(payload.txHash);
       setError(payload.error);
       setIsOpen(true);
     };
@@ -38,8 +42,12 @@ export function SwapStatusModal() {
   const close = () => {
     setIsOpen(false);
     setUserOpHash(undefined);
+    setTxHash(undefined);
     setError(undefined);
   };
+
+  const hashDisplay = userOpHash ?? txHash;
+  const hashLabel = userOpHash ? 'UserOp hash' : txHash ? 'Tx hash' : '—';
 
   const handleOneClickSwap = () => setPhase('complete');
 
@@ -146,9 +154,9 @@ export function SwapStatusModal() {
                     </div>
                     <div className="border-t border-gray-300/80 pt-3">
                       <div className="flex justify-between text-text-muted-app">
-                        <span>UserOp hash</span>
+                        <span>{hashLabel}</span>
                         <span className="truncate font-mono text-xs text-accent pl-2">
-                          {userOpHash ? `${userOpHash.slice(0, 10)}…${userOpHash.slice(-8)}` : '—'}
+                          {hashDisplay ? `${hashDisplay.slice(0, 10)}…${hashDisplay.slice(-8)}` : '—'}
                         </span>
                       </div>
                     </div>

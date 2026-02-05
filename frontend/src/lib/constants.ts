@@ -24,3 +24,9 @@ export const TOKENS = {
 };
 
 export const WALLET_SIGNIN_MESSAGE_PREFIX = 'Sign in to One-Click Gasless Swap\n\n';
+
+/** EIP-7702: delegator contract address per chain (contract that runs approve + swap when EOA delegates to it) */
+export const DELEGATOR_CONTRACT_ADDRESS: Record<number, `0x${string}`> = {
+  1: '0x0000000000000000000000000000000000000000' as `0x${string}`, // placeholder mainnet
+  11155111: '0x0000000000000000000000000000000000000000' as `0x${string}`, // placeholder Sepolia
+};

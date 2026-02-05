@@ -16,7 +16,7 @@ export function createSignerFromWalletClient(walletClient: WalletClient) {
   // Cast: wagmi/viem WalletClient is compatible at runtime; aa-core may type from its own viem
   return new WalletClientSigner(walletClient as never, String(walletClient.chain.id));
 }
-
+// backend
 export async function createSmartAccountClient(
   walletClient: WalletClient
 ): Promise<SmartAccountClient | null> {

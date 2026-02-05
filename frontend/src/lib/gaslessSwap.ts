@@ -75,7 +75,8 @@ export async function runGaslessSwap(
     };
   }
 
-  // 3. Merge paymaster into struct and sign (client has signUserOperation from decorator)
+  // 3. Merge paymaster into struct and sign (client has signUserOperation
+  // from decorator)
   const mergedUo = {
     ...uoStruct,
     paymasterAndData: paymasterAndData as `0x${string}`,
@@ -91,6 +92,10 @@ export async function runGaslessSwap(
     userOp: signedJson,
     chainId,
   });
+
+  // 4337
+
+  // 7702
 
   // 5. Record swap in backend
   try {

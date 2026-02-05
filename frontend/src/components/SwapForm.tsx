@@ -8,6 +8,7 @@ import { authApi } from '@/lib/api';
 import { WALLET_SIGNIN_MESSAGE_PREFIX } from '@/lib/constants';
 import { createSmartAccountClient } from '@/lib/smartAccount';
 import { runGaslessSwap } from '@/lib/gaslessSwap';
+import { runGaslessSwap7702 } from '@/lib/gaslessSwap7702';
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -61,29 +62,46 @@ export function SwapForm() {
     setSwapping(true);
     openSwapStatusModal({ phase: 'processing' });
 
+    const useEip7702 =
+      typeof process !== 'undefined' &&
+      process.env.NEXT_PUBLIC_USE_EIP7702 === 'true';
+
     try {
-      const client = await createSmartAccountClient(walletClient);
-      if (!client) {
-        openSwapStatusModal({ phase: 'complete', error: 'Missing NEXT_PUBLIC_ALCHEMY_API_KEY.' });
-        setSwapping(false);
-        return;
-      }
-      const smartAccountAddress = await client.getAddress();
       const amountInWei = BigInt(Math.floor(parseFloat(fromAmount) * 1e6)); // USDC 6 decimals
       const amountOutMinWei = BigInt(Math.floor(parseFloat(toAmount) * 0.95 * 1e18)); // ~5% slippage, 18 decimals
 
-      const result = await runGaslessSwap(client, {
-        chainId,
-        amountInWei,
-        amountOutMinWei,
-        smartAccountAddress,
-      });
-
-      openSwapStatusModal({
-        phase: 'complete',
-        userOpHash: result.userOpHash,
-        error: result.error,
-      });
+      if (useEip7702) {
+        const result = await runGaslessSwap7702(walletClient, {
+          chainId,
+          amountInWei,
+          amountOutMinWei,
+          userAddress: address as `0x${string}`,
+        });
+        openSwapStatusModal({
+          phase: 'complete',
+          txHash: result.txHash,
+          error: result.error,
+        });
+      } else {
+        const client = await createSmartAccountClient(walletClient);
+        if (!client) {
+          openSwapStatusModal({ phase: 'complete', error: 'Missing NEXT_PUBLIC_ALCHEMY_API_KEY.' });
+          setSwapping(false);
+          return;
+        }
+        const smartAccountAddress = await client.getAddress();
+        const result = await runGaslessSwap(client, {
+          chainId,
+          amountInWei,
+          amountOutMinWei,
+          smartAccountAddress,
+        });
+        openSwapStatusModal({
+          phase: 'complete',
+          userOpHash: result.userOpHash,
+          error: result.error,
+        });
+      }
     } catch (e) {
       openSwapStatusModal({
         phase: 'complete',

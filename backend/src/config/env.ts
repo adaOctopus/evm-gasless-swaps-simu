@@ -21,6 +21,8 @@ export const config = {
     clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
   },
   frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+  /** EIP-7702: relayer private key (hex) to pay gas for Type 4 tx */
+  relayerPrivateKey: process.env.RELAYER_PRIVATE_KEY ?? '',
 } as const;
 
 export type UserTier = 'FREE' | 'PRO' | 'MASTER';

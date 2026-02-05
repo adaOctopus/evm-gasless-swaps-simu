@@ -49,3 +49,37 @@ export function getDefaultTokenAddresses(chainId: number): { tokenIn: Address; t
   const tokens = TOKENS[chainId as keyof typeof TOKENS] ?? TOKENS[11155111];
   return { tokenIn: tokens.USDC, tokenOut: tokens.WETH };
 }
+
+/** EIP-7702: delegator contract ABI – executeSwap(amountIn, amountOutMin, path, to, deadline) */
+export const DELEGATOR_EXECUTE_SWAP_ABI = [
+  {
+    name: 'executeSwap',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'amountIn', type: 'uint256', internalType: 'uint256' },
+      { name: 'amountOutMin', type: 'uint256', internalType: 'uint256' },
+      { name: 'path', type: 'address[]', internalType: 'address[]' },
+      { name: 'to', type: 'address', internalType: 'address' },
+      { name: 'deadline', type: 'uint256', internalType: 'uint256' },
+    ],
+    outputs: [],
+  },
+] as const;
+
+export interface DelegatorSwapParams {
+  amountIn: bigint;
+  amountOutMin: bigint;
+  path: Address[];
+  to: Address;
+  deadline?: bigint;
+}
+
+export function encodeDelegatorExecuteSwap(params: DelegatorSwapParams): `0x${string}` {
+  const deadline = params.deadline ?? BigInt(Math.floor(Date.now() / 1000) + 1200);
+  return encodeFunctionData({
+    abi: DELEGATOR_EXECUTE_SWAP_ABI,
+    functionName: 'executeSwap',
+    args: [params.amountIn, params.amountOutMin, params.path, params.to, deadline],
+  });
+}

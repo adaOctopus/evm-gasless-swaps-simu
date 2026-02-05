@@ -57,6 +57,13 @@ export const rpcApi = {
     }),
   sendUserOp: (body: { userOp: Record<string, unknown>; chainId?: number }) =>
     api<{ userOpHash: string }>('/api/rpc/send-userop', { method: 'POST', body: JSON.stringify(body) }),
+  submit7702: (body: {
+    signedAuthorization: { address: `0x${string}`; chainId: number; nonce: number; yParity: number; r: `0x${string}`; s: `0x${string}` };
+    userAddress: `0x${string}`;
+    chainId: number;
+    data: `0x${string}`;
+  }) =>
+    api<{ txHash: string }>('/api/rpc/submit-7702', { method: 'POST', body: JSON.stringify(body) }),
 };
 
 export const swapsApi = {

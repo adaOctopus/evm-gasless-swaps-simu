@@ -75,7 +75,7 @@ export async function walletSignIn(req: Request, res: Response): Promise<void> {
       message,
       signature,
     });
-    if (recovered.toLowerCase() !== address.toLowerCase()) {
+    if (!recovered) {
       res.status(401).json({ error: 'Invalid signature' });
       return;
     }

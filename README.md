@@ -67,7 +67,8 @@ End-to-end flow: **user signs UserOperation in MetaMask** → **backend talks to
 | `backend/src/routes/auth.ts` | `POST /api/auth/wallet-signin` – body: `{ address, signature, message }`. |
 | `backend/src/services/alchemyGasManager.ts` | **Paymaster:** calls Alchemy Gas Manager `alchemy_requestGasAndPaymasterAndData` with policy by user tier (FREE/PRO/MASTER). |
 | `backend/src/services/alchemyBundler.ts` | **Bundler:** calls Alchemy `eth_sendUserOperation` with EntryPoint v0.6. |
-| `backend/src/controllers/rpcController.ts` | **RPC:** `paymasterData` (auth + paymaster) and `sendUserOp` (auth + bundler). Both require JWT. |
+| `backend/src/controllers/rpcController.ts` | **RPC:** `paymasterData` (auth + paymaster), `sendUserOp` (auth + bundler), `submit7702` (auth + relayer Type 4 tx). All require JWT. |
+| `backend/src/services/submit7702.ts` | **EIP-7702:** viem relayer wallet; sends Type 4 tx with `authorizationList`, `to` = user EOA, `data` = delegator calldata. |
 
 ### Frontend
 
@@ -76,10 +77,11 @@ End-to-end flow: **user signs UserOperation in MetaMask** → **backend talks to
 | `frontend/src/lib/constants.ts` | EntryPoint v0.6, Uniswap V2 router and token addresses per chain (mainnet + Sepolia). |
 | `frontend/src/lib/dex.ts` | **DEX:** encodes Uniswap V2 `swapExactTokensForTokens` (path, amounts, deadline) for the smart account `execute(router, 0, calldata)`. |
 | `frontend/src/lib/smartAccount.ts` | **Smart account:** `WalletClientSigner` from wagmi/viem (MetaMask), `createModularAccountAlchemyClient` (Alchemy aa-sdk) for Sepolia. |
-| `frontend/src/lib/gaslessSwap.ts` | **Gasless flow:** (1) build UserOp with `buildUserOperation` (call = router swap), (2) get `paymasterAndData` from backend, (3) merge and sign with `client.signUserOperation`, (4) send signed UserOp to backend, (5) record swap via `swapsApi.create`. |
-| `frontend/src/lib/api.ts` | `authApi.walletSignIn`, `rpcApi.paymasterData`, `rpcApi.sendUserOp`, `swapsApi.create`. |
-| `frontend/src/components/SwapForm.tsx` | On **Swap** click: ensure JWT (wallet sign-in if needed), create smart account client, open modal (processing), run `runGaslessSwap`, show modal (complete with `userOpHash` or error). |
-| `frontend/src/components/SwapStatusModal.tsx` | Modal states: `confirm` (dummy), `processing` (spinner), `complete` (real `userOpHash` or error). |
+| `frontend/src/lib/gaslessSwap.ts` | **ERC-4337 flow:** (1) build UserOp with `buildUserOperation` (call = router swap), (2) get `paymasterAndData` from backend, (3) merge and sign with `client.signUserOperation`, (4) send signed UserOp to backend, (5) record swap via `swapsApi.create`. |
+| `frontend/src/lib/gaslessSwap7702.ts` | **EIP-7702 flow:** (1) prepare + sign EIP-7702 authorization (EOA → delegator contract), (2) encode delegator `executeSwap` calldata, (3) send signed auth + calldata to backend `POST /api/rpc/submit-7702`, (4) relayer submits Type 4 tx; record swap with `txHash`. |
+| `frontend/src/lib/api.ts` | `authApi.walletSignIn`, `rpcApi.paymasterData`, `rpcApi.sendUserOp`, `rpcApi.submit7702`, `swapsApi.create`. |
+| `frontend/src/components/SwapForm.tsx` | On **Swap** click: ensure JWT; if `NEXT_PUBLIC_USE_EIP7702=true` run `runGaslessSwap7702`, else create smart account and run `runGaslessSwap`; show modal (complete with `userOpHash` or `txHash` or error). |
+| `frontend/src/components/SwapStatusModal.tsx` | Modal states: `confirm` (dummy), `processing` (spinner), `complete` (real `userOpHash` or `txHash` or error). |
 
 ### Flow in short
 
@@ -92,7 +94,11 @@ End-to-end flow: **user signs UserOperation in MetaMask** → **backend talks to
 7. Backend calls Alchemy Bundler `eth_sendUserOperation`; paymaster sponsors gas; EntryPoint runs smart account → DEX swap.
 8. Frontend records swap via `POST /api/swaps` and shows `userOpHash` in the modal.
 
+### EIP-7702 (optional)
+
+When `NEXT_PUBLIC_USE_EIP7702=true` and a delegator contract address is set (`NEXT_PUBLIC_DELEGATOR_CONTRACT_ADDRESS` or in `constants.ts`), the app uses the **EIP-7702** flow: user signs an authorization (EOA → delegator), frontend sends signed auth + delegator calldata to `POST /api/rpc/submit-7702`; backend relayer submits a **Type 4** transaction (relayer pays gas). See `presentation/KEY_TECHNICAL_DECISIONS.md` for flows and trade-offs.
+
 ### Env
 
-- **Backend:** `ALCHEMY_API_KEY`, `GAS_MANAGER_POLICY_ID_FREE` (and optionally PRO/MASTER), `MONGODB_URI`, `JWT_SECRET`.
-- **Frontend:** `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_ALCHEMY_API_KEY` (for smart account client + bundler RPC).
+- **Backend:** `ALCHEMY_API_KEY`, `GAS_MANAGER_POLICY_ID_FREE` (and optionally PRO/MASTER), `MONGODB_URI`, `JWT_SECRET`. For EIP-7702: `RELAYER_PRIVATE_KEY`.
+- **Frontend:** `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_ALCHEMY_API_KEY` (for smart account + bundler). For EIP-7702: `NEXT_PUBLIC_USE_EIP7702`, `NEXT_PUBLIC_DELEGATOR_CONTRACT_ADDRESS`.
